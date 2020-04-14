@@ -20,6 +20,13 @@ void readRisingEdge(void);
 void readFallingEdge(void);
 void myCaptureISR(void);
 
+uint16_t startLowCnts = 0;
+uint16_t startHighCnts = 0;
+uint16_t lowCnts = 0;
+uint16_t oneACnts = 0;
+uint16_t oneBCnts = 0;
+uint16_t endLowCnts = 0;
+
 //----------------------------------------------
 // Main "function"
 //----------------------------------------------
@@ -141,11 +148,121 @@ void main (void) {
 	} // end while 
 } // end main
 
-typedef enum {
+//uint16_t startLowCnts = 0;
+//uint16_t startHighCnts = 0;
+//uint16_t lowCnts = 0;
+//uint16_t oneACnts = 0;
+//uint16_t oneBCnts = 0;
+//uint16_t endLowCnts = 0;
+
+typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FIRST_DATA_HIGH, DATA_LOW, DATA_HIGH} state; 
 
 void myCaptureISR(void) {
     
+    static state isrState = START_START_LOW; 
+    static uint16_t previousTMRcnts = 0;
     
+    uint16_t currentTMRcnts = 0;
+    uint16_t checkCnts = 0;
+    
+    currentTMRcnts = CCPR3H;
+    currentTMRcnts = (currentTMRcnts << 8) + CCPR3L;
+    
+    switch (isrState){
+        
+        case START_START_LOW:
+            
+            previousTMRcnts = currentTMRcnts;
+            
+            readRisingEdge();
+            PIR4bits.CCP3IF = 0;
+            isrState = END_START_LOW;
+            
+            break;
+                
+        case END_START_LOW:
+            
+            startLowCnts = currentTMRcnts - previousTMRcnts;
+            
+            previousTMRcnts = currentTMRcnts;
+            
+            readFallingEdge();
+            PIR4bits.CCP3IF = 0;
+            isrState = END_START_HIGH;
+            
+            break;
+            
+        case END_START_HIGH:
+            
+            startHighCnts = currentTMRcnts - previousTMRcnts;
+            
+            previousTMRcnts = currentTMRcnts;
+            
+            readRisingEdge();
+            PIR4bits.CCP3IF = 0;
+            isrState = FIRST_DATA_LOW;
+            
+            break;
+            
+        case FIRST_DATA_LOW:
+            
+            lowCnts = currentTMRcnts - previousTMRcnts;
+            
+            previousTMRcnts = currentTMRcnts;
+            
+            readFallingEdge();
+            PIR4bits.CCP3IF = 0;
+            isrState = FIRST_DATA_HIGH;
+            
+            break;
+            
+        case FIRST_DATA_HIGH:
+            
+            oneACnts = currentTMRcnts - previousTMRcnts;
+            
+            previousTMRcnts = currentTMRcnts;
+            
+            readRisingEdge();
+            PIR4bits.CCP3IF = 0;
+            isrState = DATA_LOW;
+            
+            break;
+            
+        case DATA_LOW:
+            
+            checkCnts = currentTMRcnts - previousTMRcnts;
+            
+            if(checkCnts > lowCnts + SOME NUMER WHATSHOULS IT BE?){
+                    endLowCnts = checkCnts;
+                    isrState = START_START_LOW;
+            }else{
+                lowCnts = ((checkCnts + lowCnts) / 2); 
+            }
+            
+            previousTMRcnts = currentTMRcnts;
+            
+            readFallingEdge();
+            PIR4bits.CCP3IF = 0;
+
+            break;
+            
+        case DATA_HIGH:
+            
+            checkCnts = currentTMRcnts - previousTMRcnts;
+            
+            if(checkCnts > oneACnts + SOME NUMER WHATSHOULS IT BE?  || checkCnts < oneACnts + SOME NUMER WHATSHOULS IT BE?){
+                oneBcnts = ((checkCnts + oneBcnts) / 2);
+            }else{
+                oneAcnts = ((checkCnts + oneAcnts) / 2); 
+            }
+            
+            previousTMRcnts = currentTMRcnts;
+            
+            readRisingEdge();
+            PIR4bits.CCP3IF = 0;
+            
+            break;
+    }
 }
 
 
