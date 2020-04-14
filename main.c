@@ -16,6 +16,8 @@
 #define LED_ON      25 
 #define LED_OFF     0
 
+void readRisingEdge();
+void readFallingEdge();
 
 //----------------------------------------------
 // Main "function"
@@ -26,7 +28,6 @@ void main (void) {
     
     char cmd;
     char charIn;
-    char message[MAX_BUFFER_SIZE];
     
     SYSTEM_Initialize();
     
@@ -82,7 +83,7 @@ void main (void) {
             // Clear the terminal
             //--------------------------------------------                      
             case 'z':
-                           
+                for (i=0; i<40; i++) printf("\n");          
                 break;                  
 
             //--------------------------------------------
@@ -138,5 +139,17 @@ void main (void) {
 		} // end if
 	} // end while 
 } // end main
+
+void readRisingEdge(void) {
+    
+    CCP3CONbits.CCP3M = 0b0101; 
+    
+}
+
+void readFallingEdge(void) {
+    
+    CCP3CONbits.CCP3M = 0b0100;
+            
+}
 
 
