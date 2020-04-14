@@ -16,8 +16,9 @@
 #define LED_ON      25 
 #define LED_OFF     0
 
-void readRisingEdge();
-void readFallingEdge();
+void readRisingEdge(void);
+void readFallingEdge(void);
+void myCaptureISR(void);
 
 //----------------------------------------------
 // Main "function"
@@ -139,6 +140,14 @@ void main (void) {
 		} // end if
 	} // end while 
 } // end main
+
+typedef enum {
+
+void myCaptureISR(void) {
+    
+    
+}
+
 
 void readRisingEdge(void) {
     
