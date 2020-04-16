@@ -16,6 +16,8 @@
 #define LED_ON      25 
 #define LED_OFF     0
 
+#define CONV        16
+
 void readRisingEdge(void);
 void readFallingEdge(void);
 void myCaptureISR(void);
@@ -26,8 +28,9 @@ uint16_t lowCnts = 0;
 uint16_t oneACnts = 0;
 uint16_t oneBCnts = 0;
 uint16_t endLowCnts = 0;
-
 uint8_t numEdges = 0;
+
+bool collectingData = false; 
 
 //----------------------------------------------
 // Main "function"
@@ -35,6 +38,8 @@ uint8_t numEdges = 0;
 void main (void) {
 
     uint8_t  i;
+    uint16_t oneCnts = 0;
+    uint16_t zeroCnts = 0;
     
     char cmd;
     char charIn;
@@ -107,6 +112,24 @@ void main (void) {
             // Determine Time periods for all the bits
             //--------------------------------------------                      
             case 't':
+                printf("Press any remote button.\r\n");
+                
+                collectingData = true;
+                while (collectingData == true);
+                
+                if (oneACnts > oneBCnts) {
+                    oneCnts = oneACnts;
+                    zeroCnts = oneBCnts;
+                } else {
+                    oneCnts = oneBCnts;
+                    zeroCnts = oneACnts;
+                }
+                  
+                printf("Start: 		Lo: %u uS     Hi: %u uS\r\n", startLowCnts/CONV, startHighCnts/CONV);
+                printf("Data 1:		Lo: %u uS     Hi: %u uS\r\n", lowCnts/CONV, oneCnts/CONV);
+                printf("Data 0:		Lo: %u uS     Hi: %u uS\r\n", lowCnts/CONV, zeroCnts/CONV);
+                printf("Stop:		Lo: %u uS\r\n", endLowCnts/CONV);
+                printf("Half bits: %u half bits per button\r\n", numEdges);
                            
                 break;
 
@@ -127,7 +150,7 @@ void main (void) {
             //--------------------------------------------
             // Clone 4 donor remote buttons
             //--------------------------------------------                      
-            case '1':
+            case 'l':
                            
                 break;
 
@@ -164,10 +187,12 @@ void myCaptureISR(void) {
     static state isrState = START_START_LOW; 
     static uint16_t previousTMRcnts = 0;
     static uint8_t numDataBits = 0;     // We increment numDataBits every time we process the highCnts
+    static uint8_t numABits = 0;
+    static uint8_t numBBits = 0; 
     
     uint16_t currentTMRcnts = 0;    
-    uint16_t checkCnts = 0;     // What is this variable for?
-    uint8_t allowance = 10;     // 10% allowance
+    uint16_t checkCnts = 0;
+    uint8_t allowance = 5;     // 20% allowance
     
     currentTMRcnts = CCPR3H;    // Every time ISR triggers, we load the current tmr cnts into this variable
     currentTMRcnts = (currentTMRcnts << 8) + CCPR3L;
@@ -225,6 +250,7 @@ void myCaptureISR(void) {
         case FIRST_DATA_HIGH:
             
             oneACnts = currentTMRcnts - previousTMRcnts; // oneACnts is how long the first data bit is high
+            numABits++; 
             numDataBits++; 
             
             previousTMRcnts = currentTMRcnts;
@@ -239,13 +265,13 @@ void myCaptureISR(void) {
             
             checkCnts = currentTMRcnts - previousTMRcnts;
             
-            // Stop bit, check to see if significantly longer than lowCnts, or if we reach 32 bits (could maybe throw a flag?)
-            if(checkCnts > lowCnts + SOME NUMBER WHAT SHOULD IT BE?){ // Number should be within 10 % of one another
-                    endLowCnts = checkCnts;     
+            // If checkCnts is 20% more than lowCnts OR if numDataBits == 32, we are at the stop low bit
+            if(checkCnts > (lowCnts + lowCnts*2/10) || numDataBits == 32){ 
+                    endLowCnts = checkCnts; 
                     isrState = START_START_LOW;
             }else{
-                lowCnts = (lowCnts * (numDataBits - 1) + checkCnts) / numDataBits; // TODO: Check if this is good then implement below
-                //lowCnts = ((checkCnts + lowCnts) / 2); // Not the right way average
+                lowCnts = (lowCnts * (numDataBits - 1) + checkCnts) / numDataBits; 
+                
                 isrState = DATA_HIGH;
             }
             
@@ -261,11 +287,16 @@ void myCaptureISR(void) {
             checkCnts = currentTMRcnts - previousTMRcnts;
             numDataBits++; 
             
-            // If checkCnts is less than 10 % away from oneACnts, we consider the same bit as A
-            if(checkCnts > (oneACnts + oneACnts / allowance)  || checkCnts < (oneACnts + oneACnts / allowance) ){
-                //oneBCnts = ((checkCnts + oneBCnts) / 2); // Not the right way to average
-            }else{
-                //oneACnts = ((checkCnts + oneACnts) / 2); 
+            // If checkCnts is more than 20 % away from oneACnts, we consider it B high
+            if(checkCnts > (oneACnts + oneACnts / allowance)  || checkCnts < (oneACnts - oneACnts / allowance) ){
+                oneBCnts = (oneBCnts*numBBits + checkCnts) / (numBBits + 1); 
+                numBBits++; 
+            }
+            
+            // Otherwise, it is A high
+            else{
+                oneACnts = (oneACnts*numABits + checkCnts) / (numABits + 1); 
+                numABits++;
             }
             
             isrState = DATA_LOW;
@@ -278,7 +309,6 @@ void myCaptureISR(void) {
             break;
     }
 }
-
 
 void readRisingEdge(void) {
     
