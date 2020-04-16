@@ -45,6 +45,7 @@ void main (void) {
     char charIn;
     
     SYSTEM_Initialize();
+    ECCP3_Initialize();
     
     INTERRUPT_PeripheralInterruptEnable();
     INTERRUPT_GlobalInterruptEnable();           
@@ -184,6 +185,7 @@ typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FI
 
 void myCaptureISR(void) {
     
+    printf("inISR\r\n");
     static state isrState = START_START_LOW; 
     static uint16_t previousTMRcnts = 0;
     static uint8_t numDataBits = 0;     // We increment numDataBits every time we process the highCnts
@@ -269,6 +271,7 @@ void myCaptureISR(void) {
             if(checkCnts > (lowCnts + lowCnts*2/10) || numDataBits == 32){ 
                     endLowCnts = checkCnts; 
                     isrState = START_START_LOW;
+                    collectingData = false;
             }else{
                 lowCnts = (lowCnts * (numDataBits - 1) + checkCnts) / numDataBits; 
                 
