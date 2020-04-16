@@ -27,6 +27,8 @@ uint16_t oneACnts = 0;
 uint16_t oneBCnts = 0;
 uint16_t endLowCnts = 0;
 
+uint8_t numEdges = 0;
+
 //----------------------------------------------
 // Main "function"
 //----------------------------------------------
@@ -161,18 +163,22 @@ void myCaptureISR(void) {
     
     static state isrState = START_START_LOW; 
     static uint16_t previousTMRcnts = 0;
+    static uint8_t numDataBits = 0;     // We increment numDataBits every time we process the highCnts
     
-    uint16_t currentTMRcnts = 0;
-    uint16_t checkCnts = 0;
+    uint16_t currentTMRcnts = 0;    
+    uint16_t checkCnts = 0;     // What is this variable for?
+    uint8_t allowance = 10;     // 10% allowance
     
-    currentTMRcnts = CCPR3H;
+    currentTMRcnts = CCPR3H;    // Every time ISR triggers, we load the current tmr cnts into this variable
     currentTMRcnts = (currentTMRcnts << 8) + CCPR3L;
+    
+    numEdges++; 
     
     switch (isrState){
         
         case START_START_LOW:
             
-            previousTMRcnts = currentTMRcnts;
+            previousTMRcnts = currentTMRcnts; 
             
             readRisingEdge();
             PIR4bits.CCP3IF = 0;
@@ -218,7 +224,8 @@ void myCaptureISR(void) {
             
         case FIRST_DATA_HIGH:
             
-            oneACnts = currentTMRcnts - previousTMRcnts;
+            oneACnts = currentTMRcnts - previousTMRcnts; // oneACnts is how long the first data bit is high
+            numDataBits++; 
             
             previousTMRcnts = currentTMRcnts;
             
@@ -232,11 +239,14 @@ void myCaptureISR(void) {
             
             checkCnts = currentTMRcnts - previousTMRcnts;
             
-            if(checkCnts > lowCnts + SOME NUMER WHATSHOULS IT BE?){
-                    endLowCnts = checkCnts;
+            // Stop bit, check to see if significantly longer than lowCnts, or if we reach 32 bits (could maybe throw a flag?)
+            if(checkCnts > lowCnts + SOME NUMBER WHAT SHOULD IT BE?){ // Number should be within 10 % of one another
+                    endLowCnts = checkCnts;     
                     isrState = START_START_LOW;
             }else{
-                lowCnts = ((checkCnts + lowCnts) / 2); 
+                lowCnts = (lowCnts * (numDataBits - 1) + checkCnts) / numDataBits; // TODO: Check if this is good then implement below
+                //lowCnts = ((checkCnts + lowCnts) / 2); // Not the right way average
+                isrState = DATA_HIGH;
             }
             
             previousTMRcnts = currentTMRcnts;
@@ -249,12 +259,16 @@ void myCaptureISR(void) {
         case DATA_HIGH:
             
             checkCnts = currentTMRcnts - previousTMRcnts;
+            numDataBits++; 
             
-            if(checkCnts > oneACnts + SOME NUMER WHATSHOULS IT BE?  || checkCnts < oneACnts + SOME NUMER WHATSHOULS IT BE?){
-                oneBcnts = ((checkCnts + oneBcnts) / 2);
+            // If checkCnts is less than 10 % away from oneACnts, we consider the same bit as A
+            if(checkCnts > (oneACnts + oneACnts / allowance)  || checkCnts < (oneACnts + oneACnts / allowance) ){
+                //oneBCnts = ((checkCnts + oneBCnts) / 2); // Not the right way to average
             }else{
-                oneAcnts = ((checkCnts + oneAcnts) / 2); 
+                //oneACnts = ((checkCnts + oneACnts) / 2); 
             }
+            
+            isrState = DATA_LOW;
             
             previousTMRcnts = currentTMRcnts;
             
