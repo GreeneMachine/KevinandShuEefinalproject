@@ -185,7 +185,7 @@ typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FI
 
 void ECCP3_CaptureISR(void) {
     
-    printf("inISR\r\n");
+    //printf("inISR\r\n");
     static state isrState = START_START_LOW; 
     static uint16_t previousTMRcnts = 0;
     static uint8_t numDataBits = 0;     // We increment numDataBits every time we process the highCnts
@@ -205,12 +205,20 @@ void ECCP3_CaptureISR(void) {
         
         case START_START_LOW:
             
+            //printf("inISR START_START_LOW\r\n");
+            numEdges = 0;
+            numDataBits = 0;
+            numBBits = 0;
+            numABits = 0;
+            
             previousTMRcnts = currentTMRcnts; 
             
-            readRisingEdge();
-            PIR4bits.CCP3IF = 0;
-            isrState = END_START_LOW;
             
+            PIR4bits.CCP3IF = 0;
+            if(collectingData == true){
+                isrState = END_START_LOW;
+                readRisingEdge();
+            }
             break;
                 
         case END_START_LOW:
@@ -271,6 +279,7 @@ void ECCP3_CaptureISR(void) {
             if(checkCnts > (lowCnts + lowCnts*2/10) || numDataBits == 32){ 
                     endLowCnts = checkCnts; 
                     isrState = START_START_LOW;
+                    printf("Data collect false\r\n");
                     collectingData = false;
             }else{
                 lowCnts = (lowCnts * (numDataBits - 1) + checkCnts) / numDataBits; 
