@@ -20,7 +20,7 @@
 
 void readRisingEdge(void);
 void readFallingEdge(void);
-void myCaptureISR(void);
+//void myCaptureISR(void);
 
 uint16_t startLowCnts = 0;
 uint16_t startHighCnts = 0;
@@ -183,7 +183,7 @@ void main (void) {
 
 typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FIRST_DATA_HIGH, DATA_LOW, DATA_HIGH} state; 
 
-void myCaptureISR(void) {
+void ECCP3_CaptureISR(void) {
     
     printf("inISR\r\n");
     static state isrState = START_START_LOW; 
