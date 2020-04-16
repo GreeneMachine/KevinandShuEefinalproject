@@ -206,7 +206,7 @@ void ECCP3_CaptureISR(void) {
         case START_START_LOW:
             
             //printf("inISR START_START_LOW\r\n");
-            numEdges = 0;
+            //numEdges = 0;
             numDataBits = 0;
             numBBits = 0;
             numABits = 0;
@@ -279,7 +279,7 @@ void ECCP3_CaptureISR(void) {
             if(checkCnts > (lowCnts + lowCnts*2/10) || numDataBits == 32){ 
                     endLowCnts = checkCnts; 
                     isrState = START_START_LOW;
-                    printf("Data collect false\r\n");
+                    //printf("Data collect false\r\n");
                     collectingData = false;
             }else{
                 lowCnts = (lowCnts * (numDataBits - 1) + checkCnts) / numDataBits; 
