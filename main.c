@@ -24,6 +24,7 @@ void readRisingEdge(void);
 void readFallingEdge(void);
 //void myCaptureISR(void);
 void sort(void);
+void learn(uint8_t buttonNum);
 
 //uint16_t startLowCnts = 0;
 //uint16_t startHighCnts = 0;
@@ -155,7 +156,9 @@ void main (void) {
                     if (i%8 == 0) {
                         printf("\r\n");
                     }
-                }   
+                } 
+                
+                sort();
                 
                 printf("\r\n");
                            
@@ -185,6 +188,21 @@ void main (void) {
             // Clone 4 donor remote buttons
             //--------------------------------------------                      
             case 'l':
+                
+                for(uint8_t j = 0; j < 4; j++){
+                    printf("Press a button on the remote you would like to clone, you will clone four buttons\r\n");
+                    doneTesting = false;
+                    while (doneTesting == false);
+                    learn(j); 
+                    
+                    for (uint8_t i = 0; i < 71; i++) {
+                    printf(" %u ", training[i]);
+                    if (i%8 == 0) {
+                        printf("\r\n");
+                    }
+                } 
+                
+                }
                            
                 break;
 
@@ -278,6 +296,7 @@ void sort(void) {
     uint8_t bCnt = 0; 
     
     aSecs = training[4]; 
+    aSum = training[4];
     
     for (uint8_t i = 6; i <= 66; i = i + 2) {
         
@@ -308,6 +327,33 @@ void sort(void) {
         training[i] = 0;
     }  
     
+}
+
+void learn(uint8_t buttonNum){
+    
+    uint32_t tempButtonBits = 0;
+    
+    for(uint8_t i = 4; i <= 66; i = i + 2){
+        
+            if(training[i] > lowUS - lowUS *2/10 && training[i] < lowUS + lowUS *2/10){
+            
+                tempButtonBits = (tempButtonBits << 1 | 0);
+            
+            }else if((training[i] > highUS - highUS *2/10 && training[i] < highUS + highUS *2/10)){
+            
+                tempButtonBits = (tempButtonBits << 1 | 1);
+            }   
+    }
+    
+    storeButton[buttonNum] = tempButtonBits;
+    
+    printf("HEX Value \r\n");
+    printf("0x");
+    printf("%04x",tempButtonBits>>16);
+    printf("%04x\r\n",tempButtonBits&0xFFFF);
+    
+    
+
 }
 
 
