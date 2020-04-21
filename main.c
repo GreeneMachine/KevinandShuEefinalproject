@@ -282,7 +282,7 @@ void ECCP3_CaptureISR(void) {
                     //printf("Data collect false\r\n");
                     collectingData = false;
             }else{
-                lowCnts = (lowCnts * (numDataBits - 1) + checkCnts) / numDataBits; 
+                lowCnts = (lowCnts*numDataBits + checkCnts) / (numDataBits + 1); 
                 
                 isrState = DATA_HIGH;
             }
