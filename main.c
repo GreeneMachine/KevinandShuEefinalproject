@@ -21,14 +21,19 @@
 void readRisingEdge(void);
 void readFallingEdge(void);
 //void myCaptureISR(void);
+void sort(void);
 
-uint16_t startLowCnts = 0;
-uint16_t startHighCnts = 0;
-uint32_t lowCnts = 0;
-uint32_t oneACnts = 0;
-uint32_t oneBCnts = 0;
-uint16_t endLowCnts = 0;
+//uint16_t startLowCnts = 0;
+//uint16_t startHighCnts = 0;
+//uint32_t lowCnts = 0;
+//uint32_t oneACnts = 0;
+//uint32_t oneBCnts = 0;
+//uint16_t endLowCnts = 0;
+
 uint8_t numEdges = 0;
+
+uint16_t highUS = 0;
+uint16_t lowUS = 0;
 
 uint16_t tmrCounts[100];
 uint16_t training[71];
@@ -146,9 +151,16 @@ void main (void) {
                     if (i%8 == 0) {
                         printf("\r\n");
                     }
-                    training[i] = 0;
-                }                               
+                }   
+                
+                printf("\r\n");
                            
+                break;
+                
+            case 's':
+                
+                sort();
+                    
                 break;
 
             //--------------------------------------------
@@ -203,13 +215,13 @@ typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FI
 void ECCP3_CaptureISR(void) {
     
     //printf("inISR\r\n");
-    static state isrState = START_START_LOW; 
+    //static state isrState = START_START_LOW; 
     static uint16_t previousTMRcnts = 0;
     static bool rise = true; 
     
     uint16_t currentTMRcnts = 0;    
-    uint16_t checkCnts = 0;
-    uint8_t allowance = 5;     // 20% allowance
+    //uint16_t checkCnts = 0;
+    //uint8_t allowance = 5;     // 20% allowance
     
     if (doneTesting == false) {
         currentTMRcnts = CCPR3H;    // Every time ISR triggers, we load the current tmr cnts into this variable
@@ -250,6 +262,48 @@ void readFallingEdge(void) {
     
     CCP3CONbits.CCP3M = 0b0100;
             
+}
+
+void sort(void) {
+    
+    uint16_t aSecs = 0;
+    uint16_t bSecs = 0;
+    uint16_t aSum = 0;
+    uint16_t bSum = 0;
+    uint8_t aCnt = 1;
+    uint8_t bCnt = 0; 
+    
+    aSecs = training[4]; 
+    
+    for (uint8_t i = 6; i <= 66; i = i + 2) {
+        
+        if (training[i] > (aSecs + aSecs/5) || training[i] < (aSecs - aSecs/5)) {
+            bSum = bSum + training[i];
+            bCnt++;
+        } else {
+            aSum = aSum + training[i];
+            aCnt++; 
+        }
+        
+    }
+    
+    aSecs = aSum/aCnt;
+    bSecs = bSum/bCnt; 
+    
+    if (aSecs < bSecs) {
+        lowUS = aSecs;
+        highUS = bSecs;
+    } else {
+        lowUS = bSecs;
+        highUS = aSecs; 
+    }
+    
+    printf("lowUS = %u, highUS = %u\r\n", lowUS, highUS);
+    
+    for (uint8_t i = 0; i < 71; i++) {
+        training[i] = 0;
+    }  
+    
 }
 
 
