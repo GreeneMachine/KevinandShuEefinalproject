@@ -18,6 +18,8 @@
 
 #define CONV        16
 
+#define NUM_BUTTONS 4
+
 void readRisingEdge(void);
 void readFallingEdge(void);
 //void myCaptureISR(void);
@@ -35,6 +37,8 @@ uint16_t training[71];
 bool doneTesting = false; 
 
 bool collectingData = false; 
+
+uint32_t storeButton[NUM_BUTTONS];
 
 //----------------------------------------------
 // Main "function"
