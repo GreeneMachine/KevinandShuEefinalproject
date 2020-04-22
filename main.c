@@ -46,6 +46,8 @@ bool collectingData = false;
 
 uint32_t storeButton[NUM_BUTTONS];
 
+uint8_t sample[500];
+
 //----------------------------------------------
 // Main "function"
 //----------------------------------------------
@@ -61,8 +63,8 @@ void main (void) {
     SYSTEM_Initialize();
     ECCP3_Initialize();
     
-    INTERRUPT_PeripheralInterruptEnable();
-    INTERRUPT_GlobalInterruptEnable();           
+    //INTERRUPT_PeripheralInterruptEnable();
+    //INTERRUPT_GlobalInterruptEnable();           
 
 	printf("Dev'19 Board\r\n");
     printf("Final Project - Universal Remote Control\r\n");
@@ -166,9 +168,24 @@ void main (void) {
                 
             case 's':
                 
-                sort();
+                //sort();        
+                printf("Press remote.");
+                
+                while(IR_RX_GetValue() == 1);
+                    
+                for (uint16_t i = 0; i < 500; i++ ) {
+                    sample[i] = IR_RX_GetValue();
+                    TMR0_WriteTimer(0x10000-3200);
+                    INTCONbits.TMR0IF = 0;
+                    while(TMR0_HasOverflowOccured() == false);
+                }
+                
+                for(uint16_t i = 0; i < 500; i++) {
+                    printf(" % u\r\n", sample[i]);
+                }
                     
                 break;
+
 
             //--------------------------------------------
             // Decode logic 1 periods
