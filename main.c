@@ -47,6 +47,7 @@ bool doneTesting = false;
 uint8_t sample[500];
 
 bool collectingData = false; 
+bool transmitting = false; 
 
 uint32_t storeButton[NUM_BUTTONS];
 
@@ -475,17 +476,19 @@ void transmitButtonOverIR(uint8_t choice) {
     
 }
 
-bool transmitting = false; 
-typedef enum {IDLE, START_LOW, START_HIGH, DATA_LOW, DATA_HIGH, STOP_LOW} state; 
 
+typedef enum {IDLE_START_LOW, START_HIGH, DATA_LOW, DATA_HIGH, STOP_LOW, IDLE_HIGH} state; 
+// moved this to the top bool transmitting = false; 
 void ECCP1_CompareISR(void) {
     
-    static state compareState = IDLE; 
+    static state compareState = IDLE_START_LOW; 
     
-    case IDLE:
+    static uint32_t mask = 0x80000000;
+    
+    case IDLE_START_LOW:
         
         if (transmitting){
-            compareState = START_LOW; 
+            compareState = START_HIGH; 
             
             EPWM2_LoadDutyValue(LED_OFF);
             ECCP1_SetCompareCount(startLoUS*16);
@@ -495,15 +498,67 @@ void ECCP1_CompareISR(void) {
         break;
         
         
-    case START_LOW: 
-        
+    case START_HIGH: 
+        compareState = DATA_LOW; 
+            
+        EPWM2_LoadDutyValue(LED_ON);
+        ECCP1_SetCompareCount(startHiUS*16);
+        TMR3_WriteTimer(0);       
         
             
         break;
             
             
-    case START_HIGH:
+    case DATA_LOW:
+        compareState = DATA_HIGH;
+        
+        EPWM2_LoadDutyValue(LED_OFF);
+        ECCP1_SetCompareCount(lowHalfUS*16);
+        TMR3_WriteTimer(0);        
+        break;
+        
+    case DATA_HIGH:
+            
+        if ((storeButton[choice /* Need Different Way to identify which button in array*/] & mask) != 0){
+            
+            EPWM2_LoadDutyValue(LED_ON);
+            ECCP1_SetCompareCount(highUS*16);
+            TMR3_WriteTimer(0);
+            
+        }else{
+            
+            EPWM2_LoadDutyValue(LED_ON);
+            ECCP1_SetCompareCount(lowUS*16);
+            TMR3_WriteTimer(0);
+            
+        }
+        
+        mask = (mask >> 1);
+        
+        if(/* Need Way to identify if done sending message e.g. @32 bits or if smaller have reached the last bit*/){
+            compareState = STOP_LOW;
+            mask = 0x80000000;
+        }else{
+            compareState = DATA_LOW;
+        }
+        
+        break;
+        
+    case STOP_LOW:
+        compareState = IDLE_HIGH;
+        
+        EPWM2_LoadDutyValue(LED_OFF);
+        ECCP1_SetCompareCount(stopUS*16);
+        TMR3_WriteTimer(0);
+            
+        break;
+        
+    case IDLE_HIGH:
+        compareState = IDLE_START_LOW;
                 
+        EPWM2_LoadDutyValue(LED_ON);
+        ECCP1_SetCompareCount(/* Maybe Set this to the max number of bits in the timer so it triggers less when in idle?*/);
+        TMR3_WriteTimer(0);    
         break;
         
     // Clear the ECCP1 interrupt flag
