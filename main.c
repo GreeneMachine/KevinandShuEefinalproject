@@ -54,9 +54,7 @@ uint16_t startLoUS = 0;
 uint16_t startHiUS = 0;
 uint16_t stopUS = 0;
 
-uint32_t storeButton[NUM_BUTTONS];
-
-uint8_t sample[500];
+printf("HI");
 
 //----------------------------------------------
 // Main "function"
