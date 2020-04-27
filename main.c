@@ -13,10 +13,16 @@
 #pragma warning disable 751
 #pragma warning disable 1498
 
-#define LED_ON      25 
+#define LED_ON      25
 #define LED_OFF     0
 
 #define CONV        16
+
+#define NUM_BUTTONS 4
+
+#define NUM_BUTTONS 4
+
+#define NUM_BUTTONS 4
 
 #define NUM_BUTTONS 4
 
@@ -25,6 +31,7 @@ void readFallingEdge(void);
 //void myCaptureISR(void);
 void sort(void);
 void learn(uint8_t buttonNum);
+void transmitButtonOverIR(uint8_t choice);
 
 //uint16_t startLowCnts = 0;
 //uint16_t startHighCnts = 0;
@@ -37,12 +44,29 @@ uint8_t numEdges = 0;
 
 uint16_t highUS = 0;
 uint16_t lowUS = 0;
+uint16_t lowHalfUS = 0;
 
 uint16_t tmrCounts[100];
 uint16_t training[71];
 bool doneTesting = false; 
 
+uint8_t sample[500];
+
 bool collectingData = false; 
+
+uint32_t storeButton[NUM_BUTTONS];
+
+uint16_t startLoUS = 0;
+uint16_t startHiUS = 0;
+uint16_t stopUS = 0;
+
+uint32_t storeButton[NUM_BUTTONS];
+
+uint8_t sample[500];
+
+uint32_t storeButton[NUM_BUTTONS];
+
+uint8_t sample[500];
 
 uint32_t storeButton[NUM_BUTTONS];
 
@@ -62,10 +86,14 @@ void main (void) {
     
     SYSTEM_Initialize();
     ECCP3_Initialize();
+    EPWM2_Initialize();
     
     //INTERRUPT_PeripheralInterruptEnable();
     //INTERRUPT_GlobalInterruptEnable();           
 
+    EPWM2_LoadDutyValue(LED_ON);
+    LED_PIN_SetHigh();
+    
 	printf("Dev'19 Board\r\n");
     printf("Final Project - Universal Remote Control\r\n");
     printf("\r\n");
@@ -93,7 +121,7 @@ void main (void) {
                 printf("r: Report bit width values\r\n");
                 printf("l: cLone 4 donor remote buttons\r\n");
                 printf("1-4: Transmit IR packet\r\n");
-                printf("-------------------------------------------------\r\n");
+                printf("--------------------------------------t-----------\r\n");
 				break;
 
 			//--------------------------------------------
@@ -129,6 +157,7 @@ void main (void) {
             // Determine Time periods for all the bits
             //--------------------------------------------                      
             case 't':
+                numEdges = 0;
                 printf("Press any remote button.\r\n");
                 
 //                collectingData = true;
@@ -144,23 +173,22 @@ void main (void) {
                 
                 doneTesting = false;
                 while (doneTesting == false);
-                  
-//                printf("Start: 		Lo: %u uS     Hi: %u uS\r\n", startLowCnts/CONV, startHighCnts/CONV);
-//                printf("Data 1:		Lo: %u uS     Hi: %u uS\r\n", lowCnts/CONV, oneCnts/CONV);
-//                printf("Data 0:		Lo: %u uS     Hi: %u uS\r\n", lowCnts/CONV, zeroCnts/CONV);
-//                printf("Stop:		Lo: %u uS\r\n", endLowCnts/CONV);
-//                printf("Half bits: %u half bits per button\r\n", numEdges);
                 
-                printf("\r\nTimer counts array\r\n");;
+                printf("\r\nDuration array in us\r\n");
                 
-                for (uint8_t i = 0; i < 71; i++) {
-                    printf(" %u ", training[i]);
+                for (uint8_t i = 0; i < numEdges; i++) {
+                    printf("%u ", training[i]);
                     if (i%8 == 0) {
                         printf("\r\n");
                     }
                 } 
                 
+                startLoUS = training[1];
+                startHiUS = training[2];
+                stopUS = training[numEdges - 1]; 
+                
                 sort();
+                //printf("lowHalfUS = %u, lowUS = %u, highUS = %u\r\n", lowHalfUS, lowUS, highUS);
                 
                 printf("\r\n");
                            
@@ -191,6 +219,12 @@ void main (void) {
             // Decode logic 1 periods
             //--------------------------------------------                      
             case 'd':
+                printf("Start: 		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", startLoUS, startLoUS*16, startHiUS, startHiUS*16);
+                printf("Data 1:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, highUS, highUS*16);
+                printf("Data 0:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, lowUS, lowUS*16);
+                printf("Stop:		Lo: %u uS/%u cnts\r\n", stopUS, stopUS*16);
+                printf("Half bits: %u half bits per button\r\n", numEdges);
+                
                             
                 break;
 
@@ -207,17 +241,18 @@ void main (void) {
             case 'l':
                 
                 for(uint8_t j = 0; j < 4; j++){
+                    numEdges = 0;
                     printf("Press a button on the remote you would like to clone, you will clone four buttons\r\n");
                     doneTesting = false;
                     while (doneTesting == false);
                     learn(j); 
                     
-                    for (uint8_t i = 0; i < 71; i++) {
-                    printf(" %u ", training[i]);
-                    if (i%8 == 0) {
-                        printf("\r\n");
-                    }
-                } 
+//                    for (uint8_t i = 0; i < 68; i++) {
+//                        printf(" %u ", training[i]);
+//                        if (i%8 == 0) {
+//                            printf("\r\n");
+//                        }
+//                    }
                 
                 }
                            
@@ -227,8 +262,28 @@ void main (void) {
             // Transmit IR packet
             //--------------------------------------------                      
             case '1':
-                           
-                break;                
+                printf("Transmitting first button learned\r\n");
+                EPWM2_LoadDutyValue(LED_ON);
+                
+                transmitButtonOverIR(0);
+                break;
+
+                
+            case '2':
+                printf("Transmitting 2\r\n");
+                transmitCharacterOverIR(1);
+                break;
+                    
+            case '3':
+                printf("Transmitting 3\r\n");
+                transmitCharacterOverIR(2);
+                break;
+                
+            case '4':
+                printf("Transmitting 4\r\n");
+                transmitCharacterOverIR(3);  
+                break;
+                                           
 
             
 			//--------------------------------------------
@@ -267,8 +322,8 @@ void ECCP3_CaptureISR(void) {
         currentTMRcnts = (currentTMRcnts << 8) + CCPR3L;
 
         training[numEdges] = (currentTMRcnts - previousTMRcnts)/16; 
-
         numEdges++; 
+
         previousTMRcnts = currentTMRcnts; 
 
         if (rise == true) {
@@ -279,13 +334,11 @@ void ECCP3_CaptureISR(void) {
             rise = true;
         }
 
-        if (numEdges == 71) {
+        if (numEdges == 68) {
             doneTesting = true;
             rise = true;
-            numEdges = 0;
             readFallingEdge();
         }
-
     }
     
     PIR4bits.CCP3IF = 0;
@@ -309,6 +362,7 @@ void sort(void) {
     uint16_t bSecs = 0;
     uint16_t aSum = 0;
     uint16_t bSum = 0;
+    uint16_t lowHalfSum = 0;
     uint8_t aCnt = 1;
     uint8_t bCnt = 0; 
     
@@ -327,9 +381,19 @@ void sort(void) {
         
     }
     
+    for (uint8_t i = 3; i <= 65; i = i + 2) {
+        if (training[i] > (training[i - 2] + training[i - 2]/5)){
+            numEdges = i; 
+            break;
+        } else {
+            lowHalfSum += training[i];
+        }
+    }
+    
+    lowHalfUS = lowHalfSum/32; 
     aSecs = aSum/aCnt;
     bSecs = bSum/bCnt; 
-    
+
     if (aSecs < bSecs) {
         lowUS = aSecs;
         highUS = bSecs;
@@ -337,8 +401,6 @@ void sort(void) {
         lowUS = bSecs;
         highUS = aSecs; 
     }
-    
-    printf("lowUS = %u, highUS = %u\r\n", lowUS, highUS);
     
     for (uint8_t i = 0; i < 71; i++) {
         training[i] = 0;
@@ -373,7 +435,141 @@ void learn(uint8_t buttonNum){
 
 }
 
+void learn(uint8_t buttonNum){
+    
+    uint32_t tempButtonBits = 0;
+    
+    for(uint8_t i = 4; i <= 66; i = i + 2){
+        
+            if(training[i] > lowUS - lowUS *2/10 && training[i] < lowUS + lowUS *2/10){
+            
+                tempButtonBits = (tempButtonBits << 1 | 0);
+            
+            }else if((training[i] > highUS - highUS *2/10 && training[i] < highUS + highUS *2/10)){
+            
+                tempButtonBits = (tempButtonBits << 1 | 1);
+            }   
+    }
+    
+    storeButton[buttonNum] = tempButtonBits;
+    
+    printf("HEX Value \r\n");
+    printf("0x");
+    printf("%04x",tempButtonBits>>16);
+    printf("%04x\r\n",tempButtonBits&0xFFFF);
+    
+    
 
+}
+
+void learn(uint8_t buttonNum){
+    
+    uint32_t tempButtonBits = 0;
+    
+    for(uint8_t i = 4; i <= 66; i = i + 2){
+        
+            if(training[i] > lowUS - lowUS *2/10 && training[i] < lowUS + lowUS *2/10){
+            
+                tempButtonBits = (tempButtonBits << 1 | 0);
+            
+            }else if((training[i] > highUS - highUS *2/10 && training[i] < highUS + highUS *2/10)){
+            
+                tempButtonBits = (tempButtonBits << 1 | 1);
+            }   
+    }
+    
+    storeButton[buttonNum] = tempButtonBits;
+    
+    printf("HEX Value \r\n");
+    printf("0x");
+    printf("%04x",tempButtonBits>>16);
+    printf("%04x\r\n",tempButtonBits&0xFFFF);
+    
+    
+
+}
+
+void learn(uint8_t buttonNum){
+    
+    uint32_t tempButtonBits = 0;
+    
+    for(uint8_t i = 4; i <= 66; i = i + 2){
+        
+            if(training[i] > lowUS - lowUS *2/10 && training[i] < lowUS + lowUS *2/10){
+            
+                tempButtonBits = (tempButtonBits << 1 | 0);
+            
+            }else if((training[i] > highUS - highUS *2/10 && training[i] < highUS + highUS *2/10)){
+            
+                tempButtonBits = (tempButtonBits << 1 | 1);
+            }   
+    }
+    
+    storeButton[buttonNum] = tempButtonBits;
+    
+    printf("HEX Value \r\n");
+    printf("0x");
+    printf("%04x",tempButtonBits>>16);
+    printf("%04x\r\n",tempButtonBits&0xFFFF);
+
+}
+
+void transmitButtonOverIR(uint8_t choice) {
+    
+    uint32_t mask;
+    LED_PIN_SetLow();
+    
+    // Start Lo Bit
+    EPWM2_LoadDutyValue(LED_OFF);
+    TMR0_WriteTimer(0x10000 - startLoUS*16);
+    INTCONbits.TMR0IF = 0;
+    while(TMR0_HasOverflowOccured() == false);
+    
+    // Start Hi Bit
+    EPWM2_LoadDutyValue(LED_ON);
+    TMR0_WriteTimer(0x10000 - startHiUS*16);
+    INTCONbits.TMR0IF = 0;
+    while(TMR0_HasOverflowOccured() == false);
+    
+    // Data Bits
+    mask = 0x80000000;
+    
+    for (uint8_t i = 0; i < 32; i++) {
+        
+        EPWM2_LoadDutyValue(LED_OFF);
+        TMR0_WriteTimer(0x10000 - lowHalfUS*16);
+        INTCONbits.TMR0IF = 0;
+        while(TMR0_HasOverflowOccured() == false);
+        
+        if ((storeButton[choice] & mask) != 0){
+            
+            EPWM2_LoadDutyValue(LED_ON);
+            TMR0_WriteTimer(0x10000 - highUS*16);
+            INTCONbits.TMR0IF = 0;
+            while(TMR0_HasOverflowOccured() == false); 
+            
+        }else{
+            
+            EPWM2_LoadDutyValue(LED_ON);
+            TMR0_WriteTimer(0x10000 - lowUS*16);
+            INTCONbits.TMR0IF = 0;
+            while(TMR0_HasOverflowOccured() == false);
+            
+        }
+        
+        mask = (mask >> 1);
+    }    
+    // Stop Low Bit
+    EPWM2_LoadDutyValue(LED_OFF);
+    TMR0_WriteTimer(0x10000 - stopUS*16);
+    INTCONbits.TMR0IF = 0;
+    while(TMR0_HasOverflowOccured() == false); 
+    
+    EPWM2_LoadDutyValue(LED_ON);
+    
+    LED_PIN_SetHigh();
+    
+}
 //switch (isrState){
 //        
 //        case START_START_LOW:
