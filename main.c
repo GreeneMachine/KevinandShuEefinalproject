@@ -20,12 +20,6 @@
 
 #define NUM_BUTTONS 4
 
-#define NUM_BUTTONS 4
-
-#define NUM_BUTTONS 4
-
-#define NUM_BUTTONS 4
-
 void readRisingEdge(void);
 void readFallingEdge(void);
 //void myCaptureISR(void);
@@ -59,14 +53,6 @@ uint32_t storeButton[NUM_BUTTONS];
 uint16_t startLoUS = 0;
 uint16_t startHiUS = 0;
 uint16_t stopUS = 0;
-
-uint32_t storeButton[NUM_BUTTONS];
-
-uint8_t sample[500];
-
-uint32_t storeButton[NUM_BUTTONS];
-
-uint8_t sample[500];
 
 uint32_t storeButton[NUM_BUTTONS];
 
@@ -271,17 +257,17 @@ void main (void) {
                 
             case '2':
                 printf("Transmitting 2\r\n");
-                transmitCharacterOverIR(1);
+                transmitButtonOverIR(1);
                 break;
                     
             case '3':
                 printf("Transmitting 3\r\n");
-                transmitCharacterOverIR(2);
+                transmitButtonOverIR(2);
                 break;
                 
             case '4':
                 printf("Transmitting 4\r\n");
-                transmitCharacterOverIR(3);  
+                transmitButtonOverIR(3);  
                 break;
                                            
 
@@ -408,86 +394,6 @@ void sort(void) {
     
 }
 
-void learn(uint8_t buttonNum){
-    
-    uint32_t tempButtonBits = 0;
-    
-    for(uint8_t i = 4; i <= 66; i = i + 2){
-        
-            if(training[i] > lowUS - lowUS *2/10 && training[i] < lowUS + lowUS *2/10){
-            
-                tempButtonBits = (tempButtonBits << 1 | 0);
-            
-            }else if((training[i] > highUS - highUS *2/10 && training[i] < highUS + highUS *2/10)){
-            
-                tempButtonBits = (tempButtonBits << 1 | 1);
-            }   
-    }
-    
-    storeButton[buttonNum] = tempButtonBits;
-    
-    printf("HEX Value \r\n");
-    printf("0x");
-    printf("%04x",tempButtonBits>>16);
-    printf("%04x\r\n",tempButtonBits&0xFFFF);
-    
-    
-
-}
-
-void learn(uint8_t buttonNum){
-    
-    uint32_t tempButtonBits = 0;
-    
-    for(uint8_t i = 4; i <= 66; i = i + 2){
-        
-            if(training[i] > lowUS - lowUS *2/10 && training[i] < lowUS + lowUS *2/10){
-            
-                tempButtonBits = (tempButtonBits << 1 | 0);
-            
-            }else if((training[i] > highUS - highUS *2/10 && training[i] < highUS + highUS *2/10)){
-            
-                tempButtonBits = (tempButtonBits << 1 | 1);
-            }   
-    }
-    
-    storeButton[buttonNum] = tempButtonBits;
-    
-    printf("HEX Value \r\n");
-    printf("0x");
-    printf("%04x",tempButtonBits>>16);
-    printf("%04x\r\n",tempButtonBits&0xFFFF);
-    
-    
-
-}
-
-void learn(uint8_t buttonNum){
-    
-    uint32_t tempButtonBits = 0;
-    
-    for(uint8_t i = 4; i <= 66; i = i + 2){
-        
-            if(training[i] > lowUS - lowUS *2/10 && training[i] < lowUS + lowUS *2/10){
-            
-                tempButtonBits = (tempButtonBits << 1 | 0);
-            
-            }else if((training[i] > highUS - highUS *2/10 && training[i] < highUS + highUS *2/10)){
-            
-                tempButtonBits = (tempButtonBits << 1 | 1);
-            }   
-    }
-    
-    storeButton[buttonNum] = tempButtonBits;
-    
-    printf("HEX Value \r\n");
-    printf("0x");
-    printf("%04x",tempButtonBits>>16);
-    printf("%04x\r\n",tempButtonBits&0xFFFF);
-    
-    
-
-}
 
 void learn(uint8_t buttonNum){
     
