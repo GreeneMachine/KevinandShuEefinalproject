@@ -74,8 +74,8 @@ void main (void) {
     ECCP3_Initialize();
     EPWM2_Initialize();
     
-    //INTERRUPT_PeripheralInterruptEnable();
-    //INTERRUPT_GlobalInterruptEnable();           
+    INTERRUPT_PeripheralInterruptEnable();
+    INTERRUPT_GlobalInterruptEnable();           
 
     EPWM2_LoadDutyValue(LED_ON);
     LED_PIN_SetHigh();
