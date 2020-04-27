@@ -474,6 +474,45 @@ void transmitButtonOverIR(uint8_t choice) {
     LED_PIN_SetHigh();
     
 }
+
+bool transmitting = false; 
+typedef enum {IDLE, START_LOW, START_HIGH, DATA_LOW, DATA_HIGH, STOP_LOW} state; 
+
+void ECCP1_CompareISR(void) {
+    
+    static state compareState = IDLE; 
+    
+    case IDLE:
+        
+        if (transmitting){
+            compareState = START_LOW; 
+            
+            EPWM2_LoadDutyValue(LED_OFF);
+            ECCP1_SetCompareCount(startLoUS*16);
+            TMR3_WriteTimer(0);
+        }
+        
+        break;
+        
+        
+    case START_LOW: 
+        
+        
+            
+        break;
+            
+            
+    case START_HIGH:
+                
+        break;
+        
+    // Clear the ECCP1 interrupt flag
+    PIR1bits.CCP1IF = 0;
+}
+
+
+
+
 //switch (isrState){
 //        
 //        case START_START_LOW:
