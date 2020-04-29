@@ -78,7 +78,7 @@ void main (void) {
     INTERRUPT_GlobalInterruptEnable();           
 
     EPWM2_LoadDutyValue(LED_ON);
-    LED_PIN_SetHigh();
+    //LED_PIN_SetHigh();
     
 	printf("Dev'19 Board\r\n");
     printf("Final Project - Universal Remote Control\r\n");
