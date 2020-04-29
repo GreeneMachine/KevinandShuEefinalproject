@@ -56,7 +56,7 @@ uint16_t startHiUS = 0;
 uint16_t stopUS = 0;
 
 uint8_t choice = 0; 
-uint8_t testArr[80];
+uint16_t testArr[80];
 
 //----------------------------------------------
 // Main "function"
@@ -83,7 +83,9 @@ void main (void) {
 	printf("Dev'19 Board\r\n");
     printf("Final Project - Universal Remote Control\r\n");
     printf("\r\n");
-	printf("\r\n");                     
+	printf("\r\n");        
+    
+    PIE1bits.CCP1IE = 0;
 
 
 	for(;;) {
@@ -248,6 +250,7 @@ void main (void) {
             // Transmit IR packet
             //--------------------------------------------                      
             case '1':
+                PIE1bits.CCP1IE = 1;
                 printf("Transmitting first button learned\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 0;
@@ -256,6 +259,7 @@ void main (void) {
                 break;
                 
             case '2':
+                PIE1bits.CCP1IE = 1;
                 printf("Transmitting 2\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 1;
@@ -263,6 +267,7 @@ void main (void) {
                 break;
                     
             case '3':
+                PIE1bits.CCP1IE = 1;
                 printf("Transmitting 3\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 2;
@@ -270,6 +275,7 @@ void main (void) {
                 break;
                 
             case '4':
+                PIE1bits.CCP1IE = 1;
                 printf("Transmitting 4\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 3;
@@ -505,6 +511,9 @@ void ECCP1_CompareISR(void) {
         case IDLE_START_LOW1:
 
             if (transmitting){
+                
+                testArr[numInts] = TMR3_ReadTimer();
+                
                 compareState = START_HIGH1; 
 
                 EPWM2_LoadDutyValue(LED_OFF);
@@ -512,51 +521,50 @@ void ECCP1_CompareISR(void) {
                 TMR3_WriteTimer(0);
 
                 numInts = 1;
-
-                testArr[numInts] = LED_OFF;
+                
             }
 
             break;
 
         case START_HIGH1: 
+            testArr[numInts] = TMR3_ReadTimer();
+            
             compareState = DATA_LOW1; 
 
             EPWM2_LoadDutyValue(LED_ON);
             ECCP1_SetCompareCount(startHiUS*16);
             TMR3_WriteTimer(0);       
 
-            testArr[numInts] = LED_ON;
+            testArr[numInts] = TMR3_ReadTimer();
 
             break;
 
         case DATA_LOW1:
+            testArr[numInts] = TMR3_ReadTimer();
+            
             compareState = DATA_HIGH1;
 
             EPWM2_LoadDutyValue(LED_OFF);
             ECCP1_SetCompareCount(lowHalfUS*16);
             TMR3_WriteTimer(0);        
 
-            testArr[numInts] = LED_OFF;
-
             break;
 
         case DATA_HIGH1:
-
+            
+            testArr[numInts] = TMR3_ReadTimer();
+            
             if ((storeButton[choice] & mask) != 0){
 
                 EPWM2_LoadDutyValue(LED_ON);
                 ECCP1_SetCompareCount(highUS*16);
                 TMR3_WriteTimer(0);
 
-                testArr[numInts] = LED_ON;
-
             }else{
 
                 EPWM2_LoadDutyValue(LED_ON);
                 ECCP1_SetCompareCount(lowUS*16);
                 TMR3_WriteTimer(0);
-
-                testArr[numInts] = LED_ON/2;
 
             }
 
@@ -572,18 +580,21 @@ void ECCP1_CompareISR(void) {
             break;
 
         case STOP_LOW1:
+            
+            testArr[numInts] = TMR3_ReadTimer();
+            
             compareState = IDLE_HIGH1;
 
             EPWM2_LoadDutyValue(LED_OFF);
             ECCP1_SetCompareCount(stopUS*16);
             TMR3_WriteTimer(0);
 
-            testArr[numInts] = LED_OFF;
-
             break;
 
         // When do reset the variable transmitting?     
         case IDLE_HIGH1:
+            testArr[numInts] = TMR3_ReadTimer();
+            
             compareState = IDLE_START_LOW1;
 
             transmitting = false; 
@@ -591,8 +602,6 @@ void ECCP1_CompareISR(void) {
             EPWM2_LoadDutyValue(LED_ON);
             ECCP1_SetCompareCount(60000);
             TMR3_WriteTimer(0);    
-
-            testArr[numInts] = LED_ON;
 
             break;
     }
