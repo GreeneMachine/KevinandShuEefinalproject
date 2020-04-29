@@ -596,6 +596,7 @@ void ECCP1_CompareISR(void) {
             testArr[numInts] = TMR3_ReadTimer();
             
             compareState = IDLE_START_LOW1;
+            PIE1bits.CCP1IE = 0;
 
             transmitting = false; 
 
