@@ -535,8 +535,6 @@ void ECCP1_CompareISR(void) {
             ECCP1_SetCompareCount(startHiUS*16);
             TMR3_WriteTimer(0);       
 
-            testArr[numInts] = TMR3_ReadTimer();
-
             break;
 
         case DATA_LOW1:
