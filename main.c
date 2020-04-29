@@ -55,7 +55,8 @@ uint16_t startLoUS = 0;
 uint16_t startHiUS = 0;
 uint16_t stopUS = 0;
 
-printf("HI");
+uint8_t choice = 0; 
+uint8_t testArr[80];
 
 //----------------------------------------------
 // Main "function"
@@ -249,27 +250,38 @@ void main (void) {
             case '1':
                 printf("Transmitting first button learned\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
-                
-                transmitButtonOverIR(0);
+                choice = 0;
+                transmitting = true; 
+                //transmitButtonOverIR(0);
                 break;
-
                 
             case '2':
                 printf("Transmitting 2\r\n");
-                transmitButtonOverIR(1);
+                EPWM2_LoadDutyValue(LED_ON);
+                choice = 1;
+                transmitting = true; 
                 break;
                     
             case '3':
                 printf("Transmitting 3\r\n");
-                transmitButtonOverIR(2);
+                EPWM2_LoadDutyValue(LED_ON);
+                choice = 2;
+                transmitting = true; 
                 break;
                 
             case '4':
                 printf("Transmitting 4\r\n");
-                transmitButtonOverIR(3);  
+                EPWM2_LoadDutyValue(LED_ON);
+                choice = 3;
+                transmitting = true;  
                 break;
-                                           
-
+                              
+                
+            case 'p':
+                for (uint8_t i = 0; i < 80; i++) {
+                    printf("%u ", testArr[i]);
+                }
+                break;
             
 			//--------------------------------------------
 			// If something unknown is hit, tell user
@@ -289,7 +301,7 @@ void main (void) {
 //uint16_t oneBCnts = 0;
 //uint16_t endLowCnts = 0;
 
-typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FIRST_DATA_HIGH, DATA_LOW, DATA_HIGH} state; 
+//typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FIRST_DATA_HIGH, DATA_LOW, DATA_HIGH} state; 
 
 void ECCP3_CaptureISR(void) {
     
@@ -419,147 +431,171 @@ void learn(uint8_t buttonNum){
 
 }
 
-void transmitButtonOverIR(uint8_t choice) {
-    
-    uint32_t mask;
-    LED_PIN_SetLow();
-    
-    // Start Lo Bit
-    EPWM2_LoadDutyValue(LED_OFF);
-    TMR0_WriteTimer(0x10000 - startLoUS*16);
-    INTCONbits.TMR0IF = 0;
-    while(TMR0_HasOverflowOccured() == false);
-    
-    // Start Hi Bit
-    EPWM2_LoadDutyValue(LED_ON);
-    TMR0_WriteTimer(0x10000 - startHiUS*16);
-    INTCONbits.TMR0IF = 0;
-    while(TMR0_HasOverflowOccured() == false);
-    
-    // Data Bits
-    mask = 0x80000000;
-    
-    for (uint8_t i = 0; i < 32; i++) {
-        
-        EPWM2_LoadDutyValue(LED_OFF);
-        TMR0_WriteTimer(0x10000 - lowHalfUS*16);
-        INTCONbits.TMR0IF = 0;
-        while(TMR0_HasOverflowOccured() == false);
-        
-        if ((storeButton[choice] & mask) != 0){
-            
-            EPWM2_LoadDutyValue(LED_ON);
-            TMR0_WriteTimer(0x10000 - highUS*16);
-            INTCONbits.TMR0IF = 0;
-            while(TMR0_HasOverflowOccured() == false); 
-            
-        }else{
-            
-            EPWM2_LoadDutyValue(LED_ON);
-            TMR0_WriteTimer(0x10000 - lowUS*16);
-            INTCONbits.TMR0IF = 0;
-            while(TMR0_HasOverflowOccured() == false);
-            
-        }
-        
-        mask = (mask >> 1);
-    }    
-    // Stop Low Bit
-    EPWM2_LoadDutyValue(LED_OFF);
-    TMR0_WriteTimer(0x10000 - stopUS*16);
-    INTCONbits.TMR0IF = 0;
-    while(TMR0_HasOverflowOccured() == false); 
-    
-    EPWM2_LoadDutyValue(LED_ON);
-    
-    LED_PIN_SetHigh();
-    
-}
+//void transmitButtonOverIR(uint8_t choice) {
+//    
+//    uint32_t mask;
+//    LED_PIN_SetLow();
+//    
+//    // Start Lo Bit
+//    EPWM2_LoadDutyValue(LED_OFF);
+//    TMR0_WriteTimer(0x10000 - startLoUS*16);
+//    INTCONbits.TMR0IF = 0;
+//    while(TMR0_HasOverflowOccured() == false);
+//    
+//    // Start Hi Bit
+//    EPWM2_LoadDutyValue(LED_ON);
+//    TMR0_WriteTimer(0x10000 - startHiUS*16);
+//    INTCONbits.TMR0IF = 0;
+//    while(TMR0_HasOverflowOccured() == false);
+//    
+//    // Data Bits
+//    mask = 0x80000000;
+//    
+//    for (uint8_t i = 0; i < 32; i++) {
+//        
+//        EPWM2_LoadDutyValue(LED_OFF);
+//        TMR0_WriteTimer(0x10000 - lowHalfUS*16);
+//        INTCONbits.TMR0IF = 0;
+//        while(TMR0_HasOverflowOccured() == false);
+//        
+//        if ((storeButton[choice] & mask) != 0){
+//            
+//            EPWM2_LoadDutyValue(LED_ON);
+//            TMR0_WriteTimer(0x10000 - highUS*16);
+//            INTCONbits.TMR0IF = 0;
+//            while(TMR0_HasOverflowOccured() == false); 
+//            
+//        }else{
+//            
+//            EPWM2_LoadDutyValue(LED_ON);
+//            TMR0_WriteTimer(0x10000 - lowUS*16);
+//            INTCONbits.TMR0IF = 0;
+//            while(TMR0_HasOverflowOccured() == false);
+//            
+//        }
+//        
+//        mask = (mask >> 1);
+//    }    
+//    // Stop Low Bit
+//    EPWM2_LoadDutyValue(LED_OFF);
+//    TMR0_WriteTimer(0x10000 - stopUS*16);
+//    INTCONbits.TMR0IF = 0;
+//    while(TMR0_HasOverflowOccured() == false); 
+//    
+//    EPWM2_LoadDutyValue(LED_ON);
+//    
+//    LED_PIN_SetHigh();
+//    
+//}
 
-
-typedef enum {IDLE_START_LOW, START_HIGH, DATA_LOW, DATA_HIGH, STOP_LOW, IDLE_HIGH} state; 
+typedef enum {IDLE_START_LOW1, START_HIGH1, DATA_LOW1, DATA_HIGH1, STOP_LOW1, IDLE_HIGH1} state1; 
 // moved this to the top bool transmitting = false; 
 void ECCP1_CompareISR(void) {
     
-    static state compareState = IDLE_START_LOW; 
+    static state1 compareState = IDLE_START_LOW1; 
     
     static uint32_t mask = 0x80000000;
     
-    case IDLE_START_LOW:
-        
-        if (transmitting){
-            compareState = START_HIGH; 
-            
+    static uint8_t numInts = 0;
+    
+    numInts++; 
+    
+    // When will the first one trigger? 
+    switch(compareState){
+        case IDLE_START_LOW1:
+
+            if (transmitting){
+                compareState = START_HIGH1; 
+
+                EPWM2_LoadDutyValue(LED_OFF);
+                ECCP1_SetCompareCount(startLoUS*16);
+                TMR3_WriteTimer(0);
+
+                numInts = 1;
+
+                testArr[numInts] = LED_OFF;
+            }
+
+            break;
+
+        case START_HIGH1: 
+            compareState = DATA_LOW1; 
+
+            EPWM2_LoadDutyValue(LED_ON);
+            ECCP1_SetCompareCount(startHiUS*16);
+            TMR3_WriteTimer(0);       
+
+            testArr[numInts] = LED_ON;
+
+            break;
+
+        case DATA_LOW1:
+            compareState = DATA_HIGH1;
+
             EPWM2_LoadDutyValue(LED_OFF);
-            ECCP1_SetCompareCount(startLoUS*16);
+            ECCP1_SetCompareCount(lowHalfUS*16);
+            TMR3_WriteTimer(0);        
+
+            testArr[numInts] = LED_OFF;
+
+            break;
+
+        case DATA_HIGH1:
+
+            if ((storeButton[choice] & mask) != 0){
+
+                EPWM2_LoadDutyValue(LED_ON);
+                ECCP1_SetCompareCount(highUS*16);
+                TMR3_WriteTimer(0);
+
+                testArr[numInts] = LED_ON;
+
+            }else{
+
+                EPWM2_LoadDutyValue(LED_ON);
+                ECCP1_SetCompareCount(lowUS*16);
+                TMR3_WriteTimer(0);
+
+                testArr[numInts] = LED_ON/2;
+
+            }
+
+            mask = (mask >> 1);
+
+            if(numInts == numEdges - 2){ // Check if 2 is correct
+                compareState = STOP_LOW1;
+                mask = 0x80000000;
+            }else{
+                compareState = DATA_LOW1;
+            }
+
+            break;
+
+        case STOP_LOW1:
+            compareState = IDLE_HIGH1;
+
+            EPWM2_LoadDutyValue(LED_OFF);
+            ECCP1_SetCompareCount(stopUS*16);
             TMR3_WriteTimer(0);
-        }
-        
-        break;
-        
-        
-    case START_HIGH: 
-        compareState = DATA_LOW; 
-            
-        EPWM2_LoadDutyValue(LED_ON);
-        ECCP1_SetCompareCount(startHiUS*16);
-        TMR3_WriteTimer(0);       
-        
-            
-        break;
-            
-            
-    case DATA_LOW:
-        compareState = DATA_HIGH;
-        
-        EPWM2_LoadDutyValue(LED_OFF);
-        ECCP1_SetCompareCount(lowHalfUS*16);
-        TMR3_WriteTimer(0);        
-        break;
-        
-    case DATA_HIGH:
-            
-        if ((storeButton[choice /* Need Different Way to identify which button in array*/] & mask) != 0){
-            
+
+            testArr[numInts] = LED_OFF;
+
+            break;
+
+        // When do reset the variable transmitting?     
+        case IDLE_HIGH1:
+            compareState = IDLE_START_LOW1;
+
+            transmitting = false; 
+
             EPWM2_LoadDutyValue(LED_ON);
-            ECCP1_SetCompareCount(highUS*16);
-            TMR3_WriteTimer(0);
-            
-        }else{
-            
-            EPWM2_LoadDutyValue(LED_ON);
-            ECCP1_SetCompareCount(lowUS*16);
-            TMR3_WriteTimer(0);
-            
-        }
-        
-        mask = (mask >> 1);
-        
-        if(/* Need Way to identify if done sending message e.g. @32 bits or if smaller have reached the last bit*/){
-            compareState = STOP_LOW;
-            mask = 0x80000000;
-        }else{
-            compareState = DATA_LOW;
-        }
-        
-        break;
-        
-    case STOP_LOW:
-        compareState = IDLE_HIGH;
-        
-        EPWM2_LoadDutyValue(LED_OFF);
-        ECCP1_SetCompareCount(stopUS*16);
-        TMR3_WriteTimer(0);
-            
-        break;
-        
-    case IDLE_HIGH:
-        compareState = IDLE_START_LOW;
-                
-        EPWM2_LoadDutyValue(LED_ON);
-        ECCP1_SetCompareCount(/* Maybe Set this to the max number of bits in the timer so it triggers less when in idle?*/);
-        TMR3_WriteTimer(0);    
-        break;
+            ECCP1_SetCompareCount(60000);
+            TMR3_WriteTimer(0);    
+
+            testArr[numInts] = LED_ON;
+
+            break;
+    }
         
     // Clear the ECCP1 interrupt flag
     PIR1bits.CCP1IF = 0;
