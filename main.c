@@ -29,12 +29,6 @@ void sort(void);
 void learn(uint8_t buttonNum);
 void transmitButtonOverIR(uint8_t choice);
 
-//uint16_t startLowCnts = 0;
-//uint16_t startHighCnts = 0;
-//uint32_t lowCnts = 0;
-//uint32_t oneACnts = 0;
-//uint32_t oneBCnts = 0;
-//uint16_t endLowCnts = 0;
 
 uint8_t numEdges = 0;
 
@@ -151,18 +145,7 @@ void main (void) {
                 numEdges = 0;
                 PIE4bits.CCP3IE = 1;
                 printf("Press any remote button.\r\n");
-                
-//                collectingData = true;
-//                while (collectingData == true);
-//                
-//                if (oneACnts > oneBCnts) {
-//                    oneCnts = oneACnts;
-//                    zeroCnts = oneBCnts;
-//                } else {
-//                    oneCnts = oneBCnts;
-//                    zeroCnts = oneACnts;
-//                }
-                
+                             
                 doneTesting = false;
                 while (doneTesting == false);
                 
@@ -259,7 +242,6 @@ void main (void) {
                 transmitting = true; 
                 while(transmitting);
                 printf("Done Transmitting\r\n");
-                //transmitButtonOverIR(0);
                 break;
                 
             case '2':
@@ -318,8 +300,6 @@ void ECCP3_CaptureISR(void) {
     static bool rise = true; 
     
     uint16_t currentTMRcnts = 0;    
-    //uint16_t checkCnts = 0;
-    //uint8_t allowance = 5;     // 20% allowance
     
     if (doneTesting == false) {
         currentTMRcnts = CCPR3H;    // Every time ISR triggers, we load the current tmr cnts into this variable
@@ -552,126 +532,3 @@ void ECCP1_CompareISR(void) {
     // Clear the ECCP1 interrupt flag
     PIR1bits.CCP1IF = 0;
 }
-
-
-
-
-//switch (isrState){
-//        
-//        case START_START_LOW:
-//            stateCheck[numEdges-1] = 0;
-//            //printf("inISR START_START_LOW\r\n");
-//            //numEdges = 0;
-//            numDataBits = 0;
-//            numBBits = 0;
-//            numABits = 0;
-//            
-//            previousTMRcnts = currentTMRcnts; 
-//            
-//            PIR4bits.CCP3IF = 0;
-//            if(collectingData == true){
-//                isrState = END_START_LOW;
-//                readRisingEdge();
-//                numEdges = 1;
-//            }
-//            break;
-//                
-//        case END_START_LOW:
-//            stateCheck[numEdges-1] = 1;
-//            startLowCnts = currentTMRcnts - previousTMRcnts;
-//            
-//            previousTMRcnts = currentTMRcnts;
-//            
-//            readFallingEdge();
-//            PIR4bits.CCP3IF = 0;
-//            isrState = END_START_HIGH;
-//            
-//            break;
-//            
-//        case END_START_HIGH:
-//            
-//            startHighCnts = currentTMRcnts - previousTMRcnts;
-//            
-//            previousTMRcnts = currentTMRcnts;
-//            
-//            readRisingEdge();
-//            PIR4bits.CCP3IF = 0;
-//            isrState = FIRST_DATA_LOW;
-//            
-//            break;
-//            
-//        case FIRST_DATA_LOW:
-//            
-//            lowCnts = currentTMRcnts - previousTMRcnts;
-//            
-//            previousTMRcnts = currentTMRcnts;
-//            
-//            readFallingEdge();
-//            PIR4bits.CCP3IF = 0;
-//            isrState = FIRST_DATA_HIGH;
-//            
-//            break;
-//            
-//        case FIRST_DATA_HIGH:
-//            
-//            oneACnts = currentTMRcnts - previousTMRcnts; // oneACnts is how long the first data bit is high
-//            numABits++; 
-//            numDataBits++; 
-//            
-//            previousTMRcnts = currentTMRcnts;
-//            
-//            readRisingEdge();
-//            PIR4bits.CCP3IF = 0;
-//            isrState = DATA_LOW;
-//            
-//            break;
-//            
-//        case DATA_LOW:
-//            
-//            checkCnts = currentTMRcnts - previousTMRcnts;
-//            
-//            // If checkCnts is 20% more than lowCnts OR if numDataBits == 32, we are at the stop low bit
-//            if(checkCnts > (lowCnts + lowCnts*2/10) || numDataBits == 45){ 
-//                    endLowCnts = checkCnts; 
-//                    isrState = START_START_LOW;
-//                    //printf("Data collect false\r\n");
-//                    collectingData = false;
-//            }else{
-//                lowCnts = (lowCnts*numDataBits + checkCnts) / (numDataBits + 1); 
-//                
-//                isrState = DATA_HIGH;
-//            }
-//            
-//            previousTMRcnts = currentTMRcnts;
-//            
-//            readFallingEdge();
-//            PIR4bits.CCP3IF = 0;
-//
-//            break;
-//            
-//        case DATA_HIGH:
-//            
-//            checkCnts = currentTMRcnts - previousTMRcnts;
-//            numDataBits++; 
-//            
-//            // If checkCnts is more than 20 % away from oneACnts, we consider it B high
-//            if(checkCnts > (oneACnts + oneACnts / allowance)  || checkCnts < (oneACnts - oneACnts / allowance) ){
-//                oneBCnts = (oneBCnts*numBBits + checkCnts) / (numBBits + 1); 
-//                numBBits++; 
-//            }
-//            
-//            // Otherwise, it is A high
-//            else{
-//                oneACnts = (oneACnts*numABits + checkCnts) / (numABits + 1); 
-//                numABits++;
-//            }
-//            
-//            isrState = DATA_LOW;
-//            
-//            previousTMRcnts = currentTMRcnts;
-//            
-//            readRisingEdge();
-//            PIR4bits.CCP3IF = 0;
-//            
-//            break;
-//    }
