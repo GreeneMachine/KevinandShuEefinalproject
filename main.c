@@ -22,6 +22,8 @@
 
 #define PRESCALAR   4
 
+#define WAIT_BETWEEN_BUTTONS 1234
+
 void readRisingEdge(void);
 void readFallingEdge(void);
 //void myCaptureISR(void);
@@ -74,7 +76,7 @@ void main (void) {
     INTERRUPT_GlobalInterruptEnable();           
 
     EPWM2_LoadDutyValue(LED_ON);
-    //LED_PIN_SetHigh();
+    LED_PIN_SetHigh();
     
 	printf("Dev'19 Board\r\n");
     printf("Final Project - Universal Remote Control\r\n");
@@ -217,7 +219,7 @@ void main (void) {
             // Clone 4 donor remote buttons
             //--------------------------------------------                      
             case 'l':
-                
+                                
                 for(uint8_t j = 0; j < 4; j++){
                     numEdges = 0;
                     PIE4bits.CCP3IE = 1;
@@ -225,6 +227,12 @@ void main (void) {
                     doneTesting = false;
                     while (doneTesting == false);
                     PIE4bits.CCP3IE = 0;
+                    for (uint8_t i = 0; i < numEdges; i++) {
+                        printf("%u ", training[i]);
+                        if (i%8 == 0) {
+                        printf("\r\n");
+                    }
+                } 
                     learn(j); 
                 
                 }
@@ -272,6 +280,39 @@ void main (void) {
                 transmitting = true;
                 while(transmitting);
                 printf("Done Transmitting\r\n");
+                break;
+                
+            case 'x':
+                PIE1bits.CCP1IE = 1;
+                printf("Turning on your TV and going to your favorite chanel\r\n");
+                EPWM2_LoadDutyValue(LED_ON);
+                
+                choice = 0;
+                transmitting = true;
+                while(transmitting);
+                TMR5_WriteTimer(0);
+                PIR5bits.TMR5IF = 0;
+                while(TMR5_HasOverflowOccured() == false);
+                
+                choice = 1;
+                transmitting = true;
+                while(transmitting);
+                TMR5_WriteTimer(0);
+                PIR5bits.TMR5IF = 0;
+                while(TMR5_HasOverflowOccured() == false);
+                
+                choice = 2;
+                transmitting = true;
+                while(transmitting);
+                TMR5_WriteTimer(0);
+                PIR5bits.TMR5IF = 0;
+                while(TMR5_HasOverflowOccured() == false);
+                
+                choice = 3;
+                transmitting = true;
+                while(transmitting);
+                
+                printf("Done Transmitting\r\n");                
                 break;
                               
                 
@@ -436,6 +477,8 @@ void ECCP1_CompareISR(void) {
 
             if (transmitting){
                 
+                LED_PIN_SetLow();
+                
                 testArr[numInts] = TMR3_ReadTimer();
                 
                 compareState = START_HIGH1; 
@@ -515,6 +558,8 @@ void ECCP1_CompareISR(void) {
 
         // When do reset the variable transmitting?     
         case IDLE_HIGH1:
+            LED_PIN_SetHigh();
+            
             testArr[numInts] = TMR3_ReadTimer();
             
             compareState = IDLE_START_LOW1;
