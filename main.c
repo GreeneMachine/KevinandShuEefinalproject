@@ -87,7 +87,8 @@ void main (void) {
     printf("\r\n");
 	printf("\r\n");        
     
-    PIE1bits.CCP1IE = 0;
+    PIE1bits.CCP1IE = 0; // Transmit ISR
+    PIE4bits.CCP3IE = 0; // Capture ISR
 
 
 	for(;;) {
@@ -148,6 +149,7 @@ void main (void) {
             //--------------------------------------------                      
             case 't':
                 numEdges = 0;
+                PIE4bits.CCP3IE = 1;
                 printf("Press any remote button.\r\n");
                 
 //                collectingData = true;
@@ -163,6 +165,8 @@ void main (void) {
                 
                 doneTesting = false;
                 while (doneTesting == false);
+                
+                PIE4bits.CCP3IE = 0;
                 
                 printf("\r\nDuration array in us\r\n");
                 
@@ -209,12 +213,6 @@ void main (void) {
             // Decode logic 1 periods
             //--------------------------------------------                      
             case 'd':
-//                printf("\r\n");
-//                printf("Start: 		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", startLoUS, startLoUS*16, startHiUS, startHiUS*16);
-//                printf("Data 1:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, highUS, highUS*16);
-//                printf("Data 0:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, lowUS, lowUS*16);
-//                printf("Stop:		Lo: %u uS/%u cnts\r\n", stopUS, stopUS*16);
-//                printf("Half bits: %u half bits per button\r\n", numEdges);
                 
                 printf("\r\n");
                 printf("Start: 		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", startLoUS, startLoUS*PRESCALAR, startHiUS, startHiUS*PRESCALAR);
@@ -239,17 +237,12 @@ void main (void) {
                 
                 for(uint8_t j = 0; j < 4; j++){
                     numEdges = 0;
+                    PIE4bits.CCP3IE = 1;
                     printf("Press a button on the remote you would like to clone, you will clone four buttons\r\n");
                     doneTesting = false;
                     while (doneTesting == false);
+                    PIE4bits.CCP3IE = 0;
                     learn(j); 
-                    
-//                    for (uint8_t i = 0; i < 68; i++) {
-//                        printf(" %u ", training[i]);
-//                        if (i%8 == 0) {
-//                            printf("\r\n");
-//                        }
-//                    }
                 
                 }
                            
