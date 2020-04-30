@@ -20,6 +20,8 @@
 
 #define NUM_BUTTONS 4
 
+#define PRESCALAR   4
+
 void readRisingEdge(void);
 void readFallingEdge(void);
 //void myCaptureISR(void);
@@ -207,12 +209,19 @@ void main (void) {
             // Decode logic 1 periods
             //--------------------------------------------                      
             case 'd':
-                printf("Start: 		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", startLoUS, startLoUS*16, startHiUS, startHiUS*16);
-                printf("Data 1:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, highUS, highUS*16);
-                printf("Data 0:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, lowUS, lowUS*16);
-                printf("Stop:		Lo: %u uS/%u cnts\r\n", stopUS, stopUS*16);
-                printf("Half bits: %u half bits per button\r\n", numEdges);
+//                printf("\r\n");
+//                printf("Start: 		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", startLoUS, startLoUS*16, startHiUS, startHiUS*16);
+//                printf("Data 1:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, highUS, highUS*16);
+//                printf("Data 0:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*16, lowUS, lowUS*16);
+//                printf("Stop:		Lo: %u uS/%u cnts\r\n", stopUS, stopUS*16);
+//                printf("Half bits: %u half bits per button\r\n", numEdges);
                 
+                printf("\r\n");
+                printf("Start: 		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", startLoUS, startLoUS*PRESCALAR, startHiUS, startHiUS*PRESCALAR);
+                printf("Data 1:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*PRESCALAR, highUS, highUS*PRESCALAR);
+                printf("Data 0:		Lo: %u uS/%u cnts     Hi: %u uS/%u cnts\r\n", lowHalfUS, lowHalfUS*PRESCALAR, lowUS, lowUS*PRESCALAR);
+                printf("Stop:		Lo: %u uS/%u cnts\r\n", stopUS, stopUS*PRESCALAR);
+                printf("Half bits: %u half bits per button\r\n", numEdges);
                             
                 break;
 
@@ -324,7 +333,7 @@ void ECCP3_CaptureISR(void) {
         currentTMRcnts = CCPR3H;    // Every time ISR triggers, we load the current tmr cnts into this variable
         currentTMRcnts = (currentTMRcnts << 8) + CCPR3L;
 
-        training[numEdges] = (currentTMRcnts - previousTMRcnts)/16; 
+        training[numEdges] = (currentTMRcnts - previousTMRcnts)/PRESCALAR; 
         numEdges++; 
 
         previousTMRcnts = currentTMRcnts; 
@@ -517,7 +526,7 @@ void ECCP1_CompareISR(void) {
                 compareState = START_HIGH1; 
 
                 EPWM2_LoadDutyValue(LED_OFF);
-                ECCP1_SetCompareCount(startLoUS*16);
+                ECCP1_SetCompareCount(startLoUS*PRESCALAR);
                 TMR3_WriteTimer(0);
 
                 numInts = 1;
@@ -532,7 +541,7 @@ void ECCP1_CompareISR(void) {
             compareState = DATA_LOW1; 
 
             EPWM2_LoadDutyValue(LED_ON);
-            ECCP1_SetCompareCount(startHiUS*16);
+            ECCP1_SetCompareCount(startHiUS*PRESCALAR);
             TMR3_WriteTimer(0);       
 
             break;
@@ -543,7 +552,7 @@ void ECCP1_CompareISR(void) {
             compareState = DATA_HIGH1;
 
             EPWM2_LoadDutyValue(LED_OFF);
-            ECCP1_SetCompareCount(lowHalfUS*16);
+            ECCP1_SetCompareCount(lowHalfUS*PRESCALAR);
             TMR3_WriteTimer(0);        
 
             break;
@@ -555,13 +564,13 @@ void ECCP1_CompareISR(void) {
             if ((storeButton[choice] & mask) != 0){
 
                 EPWM2_LoadDutyValue(LED_ON);
-                ECCP1_SetCompareCount(highUS*16);
+                ECCP1_SetCompareCount(highUS*PRESCALAR);
                 TMR3_WriteTimer(0);
 
             }else{
 
                 EPWM2_LoadDutyValue(LED_ON);
-                ECCP1_SetCompareCount(lowUS*16);
+                ECCP1_SetCompareCount(lowUS*PRESCALAR);
                 TMR3_WriteTimer(0);
 
             }
@@ -584,7 +593,7 @@ void ECCP1_CompareISR(void) {
             compareState = IDLE_HIGH1;
 
             EPWM2_LoadDutyValue(LED_OFF);
-            ECCP1_SetCompareCount(stopUS*16);
+            ECCP1_SetCompareCount(stopUS*PRESCALAR);
             TMR3_WriteTimer(0);
 
             break;
