@@ -310,15 +310,6 @@ void main (void) {
 	} // end while 
 } // end main
 
-//uint16_t startLowCnts = 0;
-//uint16_t startHighCnts = 0;
-//uint16_t lowCnts = 0;
-//uint16_t oneACnts = 0;
-//uint16_t oneBCnts = 0;
-//uint16_t endLowCnts = 0;
-
-//typedef enum {START_START_LOW, END_START_LOW, END_START_HIGH, FIRST_DATA_LOW, FIRST_DATA_HIGH, DATA_LOW, DATA_HIGH} state; 
-
 void ECCP3_CaptureISR(void) {
     
     //printf("inISR\r\n");
@@ -446,63 +437,6 @@ void learn(uint8_t buttonNum){
     printf("%04x\r\n",tempButtonBits&0xFFFF);
 
 }
-
-//void transmitButtonOverIR(uint8_t choice) {
-//    
-//    uint32_t mask;
-//    LED_PIN_SetLow();
-//    
-//    // Start Lo Bit
-//    EPWM2_LoadDutyValue(LED_OFF);
-//    TMR0_WriteTimer(0x10000 - startLoUS*16);
-//    INTCONbits.TMR0IF = 0;
-//    while(TMR0_HasOverflowOccured() == false);
-//    
-//    // Start Hi Bit
-//    EPWM2_LoadDutyValue(LED_ON);
-//    TMR0_WriteTimer(0x10000 - startHiUS*16);
-//    INTCONbits.TMR0IF = 0;
-//    while(TMR0_HasOverflowOccured() == false);
-//    
-//    // Data Bits
-//    mask = 0x80000000;
-//    
-//    for (uint8_t i = 0; i < 32; i++) {
-//        
-//        EPWM2_LoadDutyValue(LED_OFF);
-//        TMR0_WriteTimer(0x10000 - lowHalfUS*16);
-//        INTCONbits.TMR0IF = 0;
-//        while(TMR0_HasOverflowOccured() == false);
-//        
-//        if ((storeButton[choice] & mask) != 0){
-//            
-//            EPWM2_LoadDutyValue(LED_ON);
-//            TMR0_WriteTimer(0x10000 - highUS*16);
-//            INTCONbits.TMR0IF = 0;
-//            while(TMR0_HasOverflowOccured() == false); 
-//            
-//        }else{
-//            
-//            EPWM2_LoadDutyValue(LED_ON);
-//            TMR0_WriteTimer(0x10000 - lowUS*16);
-//            INTCONbits.TMR0IF = 0;
-//            while(TMR0_HasOverflowOccured() == false);
-//            
-//        }
-//        
-//        mask = (mask >> 1);
-//    }    
-//    // Stop Low Bit
-//    EPWM2_LoadDutyValue(LED_OFF);
-//    TMR0_WriteTimer(0x10000 - stopUS*16);
-//    INTCONbits.TMR0IF = 0;
-//    while(TMR0_HasOverflowOccured() == false); 
-//    
-//    EPWM2_LoadDutyValue(LED_ON);
-//    
-//    LED_PIN_SetHigh();
-//    
-//}
 
 typedef enum {IDLE_START_LOW1, START_HIGH1, DATA_LOW1, DATA_HIGH1, STOP_LOW1, IDLE_HIGH1} state1; 
 // moved this to the top bool transmitting = false; 
