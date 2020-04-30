@@ -13,8 +13,8 @@
 #pragma warning disable 751
 #pragma warning disable 1498
 
-#define LED_ON      25
-#define LED_OFF     0
+#define LED_ON      0
+#define LED_OFF     25
 
 #define CONV        16
 
@@ -260,10 +260,12 @@ void main (void) {
             //--------------------------------------------                      
             case '1':
                 PIE1bits.CCP1IE = 1;
-                printf("Transmitting first button learned\r\n");
+                printf("Transmitting 1\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 0;
                 transmitting = true; 
+                while(transmitting);
+                printf("Done Transmitting\r\n");
                 //transmitButtonOverIR(0);
                 break;
                 
@@ -272,7 +274,9 @@ void main (void) {
                 printf("Transmitting 2\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 1;
-                transmitting = true; 
+                transmitting = true;
+                while(transmitting);
+                printf("Done Transmitting\r\n");
                 break;
                     
             case '3':
@@ -280,7 +284,9 @@ void main (void) {
                 printf("Transmitting 3\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 2;
-                transmitting = true; 
+                transmitting = true;
+                while(transmitting);
+                printf("Done Transmitting\r\n");
                 break;
                 
             case '4':
@@ -288,7 +294,9 @@ void main (void) {
                 printf("Transmitting 4\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 choice = 3;
-                transmitting = true;  
+                transmitting = true;
+                while(transmitting);
+                printf("Done Transmitting\r\n");
                 break;
                               
                 
