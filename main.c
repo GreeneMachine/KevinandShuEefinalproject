@@ -13,6 +13,9 @@
 #pragma warning disable 751
 #pragma warning disable 1498
 
+#define WAIT_ON     254
+#define WAIT_NUMBER 60
+
 #define LED_ON      0
 #define LED_OFF     25
 
@@ -97,6 +100,10 @@ void main (void) {
 			// Reply with help menu
 			//--------------------------------------------
 			case '?':
+                printf("-------------------------------------------------\r\n");
+                printf("Make sure the PIC kit is disconnected from the board\r\n");
+                printf("Jump RC4 to RB5, Jump RC3 to one of the RGB pins\r\n");
+                printf("Put Jumpers on the RCTX and 5V pins\r\n");
                 printf("-------------------------------------------------\r\n");
                 printf("?: help menu\r\n");
 				printf("o: k\r\n");
@@ -287,30 +294,49 @@ void main (void) {
                 printf("Turning on your TV and going to your favorite chanel\r\n");
                 EPWM2_LoadDutyValue(LED_ON);
                 
+                printf("Turning on your TV\r\n");
                 choice = 0;
                 transmitting = true;
                 while(transmitting);
-                TMR5_WriteTimer(0);
-                PIR5bits.TMR5IF = 0;
-                while(TMR5_HasOverflowOccured() == false);
                 
+                for( i = 0; i < WAIT_ON; i++){
+                    TMR5_WriteTimer(0);
+                    PIR5bits.TMR5IF = 0;
+                    while(TMR5_HasOverflowOccured() == false);
+                }    
+                
+                printf("Going to first digit\r\n");
+                PIE1bits.CCP1IE = 1;
                 choice = 1;
                 transmitting = true;
                 while(transmitting);
-                TMR5_WriteTimer(0);
-                PIR5bits.TMR5IF = 0;
-                while(TMR5_HasOverflowOccured() == false);
+                printf("Transmitted First Digit\r\n");
                 
+                for(i = 0; i < WAIT_NUMBER; i++){
+                    TMR5_WriteTimer(0);
+                    PIR5bits.TMR5IF = 0;
+                    while(TMR5_HasOverflowOccured() == false);
+                }
+                
+                printf("Going to second digit\r\n");
+                PIE1bits.CCP1IE = 1;
                 choice = 2;
                 transmitting = true;
                 while(transmitting);
+                printf("Transmitted Second Digit\r\n");
+                
+                for(i = 0; i < WAIT_NUMBER; i++){
                 TMR5_WriteTimer(0);
                 PIR5bits.TMR5IF = 0;
                 while(TMR5_HasOverflowOccured() == false);
+                }
                 
+                printf("Going to third digit\r\n");
+                PIE1bits.CCP1IE = 1;
                 choice = 3;
                 transmitting = true;
                 while(transmitting);
+                printf("Transmitted Third Digit\r\n");
                 
                 printf("Done Transmitting\r\n");                
                 break;
